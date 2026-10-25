@@ -44,7 +44,7 @@ preprocessor = make_column_transformer(
 
 # scale pos weight
 scale_pos_weight = (ytrain == 0).sum() / (ytrain == 1).sum()
-print(f"scale_pos_weight {scale_pos_weight}")
+# print(f"scale_pos_weight {scale_pos_weight}")
 
 # Define XGBoost classifier
 # As the dataset had imbalanced classes with only 797 prod taken out of 4128, auc is chosen as eval_metric whoch balances both precision and recall
@@ -69,8 +69,6 @@ with mlflow.start_run():
 
     # Best estimator and details
     best_model = grid_search.best_estimator_
-    mlflow.log_params(grid_search.best_params_)
-
 
     # Evaluate model performance
     ypred = best_model.predict(Xtest)
@@ -79,14 +77,8 @@ with mlflow.start_run():
     test_f1_score = f1_score(ytest, ypred)
     test_precision = precision_score(ytest, ypred)
     test_recall = recall_score(ytest, ypred)
-    
-    print(grid_search.best_params_)
-    print(f"Test Accuracy: {test_accuracy}")
-    print(f"Test F1 Score: {test_f1_score:.4f}")
-    print(f"Test Precision: {test_precision:.4f}")
-    print(f"Test Recall: {test_recall}")
 
-    mlflow.log_metric("Best Metrics ", grid_search.best_params_)
+    mlflow.log_params("Best Metrics ", grid_search.best_params_)
     mlflow.log_metric("Test Accuracy", test_accuracy)
     mlflow.log_metric("Test precision", test_precision)
     mlflow.log_metric("Test F1 Score", test_f1_score)
@@ -98,26 +90,3 @@ with mlflow.start_run():
     joblib.dump(best_model, "tourism_project/artifacts/best_model.joblib")
     print("Model training completed and artifact saved successfully.")
 
-
-    # Best estimator
-    # scale_pos_weight 4.175548589341693
-    # {'xgbclassifier__learning_rate': 0.2, 'xgbclassifier__max_depth': 8, 'xgbclassifier__n_estimators': 150}
-    # Test Accuracy: 0.9443099273607748
-    # Test F1 Score: 0.8497
-    # Test Precision: 0.8844
-    # Test Recall: 0.8176100628930818
-
-    # Other combinations and scores for reference  
-    # scale_pos_weight 4.175548589341693
-    # {'xgbclassifier__learning_rate': 0.1, 'xgbclassifier__max_depth': 5, 'xgbclassifier__n_estimators': 100}
-    # Test Accuracy: 0.8886198547215496
-    # Test F1 Score: 0.7294
-    # Test Precision: 0.6851
-    # Test Recall: 0.779874213836478
-
-    # scale_pos_weight 4.175548589341693
-    # {'xgbclassifier__learning_rate': 0.2, 'xgbclassifier__max_depth': 10, 'xgbclassifier__n_estimators': 150}
-    # Test Accuracy: 0.9394673123486683
-    # Test F1 Score: 0.8355
-    # Test Precision: 0.8759
-    # Test Recall: 0.7987421383647799
