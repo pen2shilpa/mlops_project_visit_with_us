@@ -45,7 +45,7 @@ own_car_val = 1 if own_car_selection == "Yes" else 0
 product_pitched = st.selectbox("Product Pitched", ["Deluxe", "Basic", "Standard", "Super Deluxe", "King"])
 duration_of_pitch = st.number_input("Duration of Pitch", min_value=1, max_value=100, value=5)
 pitch_satisfaction_score = st.number_input("Pitch Satisfaction Score", min_value=1, max_value=5, value=3)
-number_of_followups = st.number_input("Number of Followups", min_value=1, max_value=50, value=1)
+number_of_followups = st.number_input("Number of Followups", min_value=0, max_value=50, value=1)
 
 # Assemble input into DataFrame matching training schema exactly
 input_data = pd.DataFrame([{
