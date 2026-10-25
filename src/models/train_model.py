@@ -3,11 +3,20 @@ import joblib
 import pandas as pd
 import xgboost as xgb
 import mlflow
+import logging
+
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import make_column_transformer
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report, accuracy_score, f1_score, precision_score, recall_score
+
+# Setup basic logging configuration
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 # Load files from artifacts
 Xtrain = pd.read_csv("Xtrain.csv")
@@ -15,7 +24,6 @@ Xtest = pd.read_csv("Xtest.csv")
 ytrain = pd.read_csv("ytrain.csv").values.ravel()
 ytest = pd.read_csv("ytest.csv").values.ravel()
 
-# Define numeric and categorical features
 # Define numeric and categorical features
 numeric_features = [
     "Age", "CityTier", "DurationOfPitch", "NumberOfPersonVisiting",
@@ -49,7 +57,7 @@ model_pipeline = make_pipeline(preprocessor, xgb_model)
 # Define the parameters
 param_grid = {
     'xgbclassifier__n_estimators': [100, 150],
-    'xgbclassifier__max_depth': [3, 5],
+    'xgbclassifier__max_depth': [3, 5, 8],
     'xgbclassifier__learning_rate': [0.05, 0.1, 0.2]
 }
 
@@ -78,14 +86,38 @@ with mlflow.start_run():
     print(f"Test Precision: {test_precision:.4f}")
     print(f"Test Recall: {test_recall}")
 
-    mlflow.log_metrics({"Best Metrics ": grid_search.best_params_, 
-                        "Test Accuracy": test_accuracy,
-                        "Test precision" : test_precision,
-                        "Test F1 Score" : test_f1_score ,
-                        "Test Recall Score" : test_recall})
+    mlflow.log_metric("Best Metrics ", grid_search.best_params_)
+    mlflow.log_metric("Test Accuracy", test_accuracy)
+    mlflow.log_metric("Test precision", test_precision)
+    mlflow.log_metric("Test F1 Score", test_f1_score)
+    mlflow.log_metric("Test Recall Score", test_recall)
 
 
     # Save the trained pipeline to deployment directory
     os.makedirs("tourism_project/deployment", exist_ok=True)
     joblib.dump(best_model, "tourism_project/artifacts/best_model.joblib")
     print("Model training completed and artifact saved successfully.")
+
+
+    # Best estimator
+    # scale_pos_weight 4.175548589341693
+    # {'xgbclassifier__learning_rate': 0.2, 'xgbclassifier__max_depth': 8, 'xgbclassifier__n_estimators': 150}
+    # Test Accuracy: 0.9443099273607748
+    # Test F1 Score: 0.8497
+    # Test Precision: 0.8844
+    # Test Recall: 0.8176100628930818
+
+    # Other combinations and scores for reference  
+    # scale_pos_weight 4.175548589341693
+    # {'xgbclassifier__learning_rate': 0.1, 'xgbclassifier__max_depth': 5, 'xgbclassifier__n_estimators': 100}
+    # Test Accuracy: 0.8886198547215496
+    # Test F1 Score: 0.7294
+    # Test Precision: 0.6851
+    # Test Recall: 0.779874213836478
+
+    # scale_pos_weight 4.175548589341693
+    # {'xgbclassifier__learning_rate': 0.2, 'xgbclassifier__max_depth': 10, 'xgbclassifier__n_estimators': 150}
+    # Test Accuracy: 0.9394673123486683
+    # Test F1 Score: 0.8355
+    # Test Precision: 0.8759
+    # Test Recall: 0.7987421383647799
