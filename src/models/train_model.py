@@ -36,7 +36,7 @@ categorical_features = [
     "ProductPitched", "MaritalStatus", "Designation"
 ]
 
-# Create column transformer 
+# Create column transformer
 preprocessor = make_column_transformer(
     (StandardScaler(), numeric_features),
     (OneHotEncoder(handle_unknown='ignore'), categorical_features)
@@ -61,7 +61,7 @@ param_grid = {
     'xgbclassifier__learning_rate': [0.05, 0.1, 0.2]
 }
 
-# Define the ML Flow 
+# Define the ML Flow
 with mlflow.start_run():
     # Since both precision and recall is important we use f1 score the metric
     grid_search = GridSearchCV(model_pipeline, param_grid, cv=3, n_jobs=-1, scoring='f1')
@@ -78,15 +78,14 @@ with mlflow.start_run():
     test_precision = precision_score(ytest, ypred)
     test_recall = recall_score(ytest, ypred)
 
-    mlflow.log_params("Best Metrics ", grid_search.best_params_)
+    # Correctly log the tuning parameters as a dictionary without string description headers
+    mlflow.log_params(grid_search.best_params_)
     mlflow.log_metric("Test Accuracy", test_accuracy)
     mlflow.log_metric("Test precision", test_precision)
     mlflow.log_metric("Test F1 Score", test_f1_score)
     mlflow.log_metric("Test Recall Score", test_recall)
 
-
     # Save the trained pipeline to deployment directory
     os.makedirs("tourism_project/deployment", exist_ok=True)
     joblib.dump(best_model, "tourism_project/artifacts/best_model.joblib")
     print("Model training completed and artifact saved successfully.")
-
