@@ -9,7 +9,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-FILE_PATH = "tourism_project/data/tourism.csv"
+FILE_PATH = "data/tourism.csv"
 assert os.path.exists(FILE_PATH), f"Data file not found at {FILE_PATH}"
 
 # Load the raw dataset
