@@ -86,6 +86,6 @@ with mlflow.start_run():
     mlflow.log_metric("Test Recall Score", test_recall)
 
     # Save the trained pipeline to deployment directory
-    os.makedirs("tourism_project/deployment", exist_ok=True)
-    joblib.dump(best_model, "tourism_project/artifacts/best_model.joblib")
+    os.makedirs("artifacts", exist_ok=True)
+    joblib.dump(best_model, "artifacts/best_model.joblib")
     print("Model training completed and artifact saved successfully.")
