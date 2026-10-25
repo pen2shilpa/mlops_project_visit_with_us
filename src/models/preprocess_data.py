@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 FILE_PATH = "tourism_project/data/tourism.csv"
 assert os.path.exists(FILE_PATH), f"Data file not found at {FILE_PATH}"
 
-df = pd.read_csv(FILE_PATH)
+df = pd.read_csv(FILE_PATH, on_bad_lines="skip")
 df_original = df.copy()
 
 logger.info(f"STEP :: Data is read from the file successfully")
