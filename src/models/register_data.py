@@ -1,5 +1,6 @@
-import os 
+import os
 import pandas as pd
+import logging
 
 # Setup basic logging configuration
 logging.basicConfig(
@@ -33,7 +34,7 @@ if missing:
 
 logger.info("Tourism Dataset registered successfully.")
 logger.info(f"Rows: {df.shape[0]}, Columns: {df.shape[1]}")
-logger.info("Columns Names:", list(df.columns))
+logger.info("Columns Names: %s", list(df.columns))
 
 logger.info("Distribution of Tourism package purchased by customers")
 logger.info(df["ProdTaken"].value_counts())
