@@ -18,6 +18,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+mlflow.set_tracking_uri("http://localhost:5000")
+mlflow.set_experiment("mlops-training-experiment")
+
 # Load files from artifacts
 Xtrain = pd.read_csv("Xtrain.csv")
 Xtest = pd.read_csv("Xtest.csv")
@@ -44,9 +47,8 @@ preprocessor = make_column_transformer(
 
 # scale pos weight
 scale_pos_weight = (ytrain == 0).sum() / (ytrain == 1).sum()
-# print(f"scale_pos_weight {scale_pos_weight}")
 
-# Define XGBoost classifier
+# Define XGBoost classifier 
 # As the dataset had imbalanced classes with only 797 prod taken out of 4128, auc is chosen as eval_metric whoch balances both precision and recall
 # aucpr (Area Under the Precision-Recall Curve)
 xgb_model = xgb.XGBClassifier(random_state=42, n_jobs=-1, eval_metric='aucpr', scale_pos_weight=scale_pos_weight)
@@ -62,30 +64,59 @@ param_grid = {
 }
 
 # Define the ML Flow
-with mlflow.start_run():
+with mlflow.start_run(run_name="XGBoost_Grid_search"):
     # Since both precision and recall is important we use f1 score the metric
     grid_search = GridSearchCV(model_pipeline, param_grid, cv=3, n_jobs=-1, scoring='f1')
     grid_search.fit(Xtrain, ytrain)
 
-    # Best estimator and details
+    # Log all parameter combinations and F1 scores
+    results = grid_search.cv_results_
+    metric_name = grid_search.scoring 
+
+    for i in range(len(results['params'])):
+        param_set = results['params'][i]
+        mean_score = results['mean_test_score'][i]
+
+        with mlflow.start_run(nested=True):
+            mlflow.log_params(param_set)
+            mlflow.log_metric(metric_name, mean_score)
+
+
+    # Log parameters for the best model
     best_model = grid_search.best_estimator_
+    mlflow.log_params(grid_search.best_params_)
 
     # Evaluate model performance
-    ypred = best_model.predict(Xtest)
+    ytrain_pred = best_model.predict(Xtrain)
+    ytest_pred = best_model.predict(Xtest)
 
-    test_accuracy = accuracy_score(ytest, ypred)
-    test_f1_score = f1_score(ytest, ypred)
-    test_precision = precision_score(ytest, ypred)
-    test_recall = recall_score(ytest, ypred)
+    # Train Metrics
+    train_precision = precision_score(ytrain, ytrain_pred)
+    train_recall = recall_score(ytrain, ytrain_pred)
+    train_accuracy = accuracy_score(ytrain, ytrain_pred)
+    train_f1_score = f1_score(ytrain, ytrain_pred)
 
-    # Correctly log the tuning parameters as a dictionary without string description headers
-    mlflow.log_params(grid_search.best_params_)
-    mlflow.log_metric("Test Accuracy", test_accuracy)
-    mlflow.log_metric("Test precision", test_precision)
-    mlflow.log_metric("Test F1 Score", test_f1_score)
-    mlflow.log_metric("Test Recall Score", test_recall)
 
-    # Save the trained pipeline to deployment directory
+    # Test metrics
+    test_precision = precision_score(ytest, ytest_pred)
+    test_recall = recall_score(ytest, ytest_pred)
+    test_accuracy = accuracy_score(ytest, ytest_pred)
+    test_f1_score = f1_score(ytest, ytest_pred)
+
+    # Log Metrics
+    mlflow.log_metrics({
+        "train_precision": train_precision,
+        "test_precision": test_precision,
+        "train_recall": train_recall,
+        "test_recall": test_recall,
+        "train_accuracy": train_accuracy,
+        "test_accuracy": test_accuracy,
+        "train_f1_score": train_f1_score,
+        "test_f1_score": test_f1_score
+    })
+
+    # Save the trained pipeline to artifacts directory
     os.makedirs("artifacts", exist_ok=True)
     joblib.dump(best_model, "artifacts/best_model.joblib")
-    print("Model training completed and artifact saved successfully.")
+
+    logger.info("Model training completed and artifact saved successfully.")
