@@ -20,7 +20,6 @@ logger.info(f"STEP :: Data is read from the file successfully")
 
 # Check for any null or missing values
 missing_values_count = df.isna().sum().sum()
-# print(f"Found {missing_values_count} missing values")
 
 if missing_values_count > 0:
     logger.warning(f"Dataset contains {missing_values_count} missing values.")
@@ -33,7 +32,6 @@ if missing_values_count > 0:
 
 # Check for any duplicates
 duplicates_count = df.duplicated().sum()
-# print(f"Found {duplicates_count} duplicates ")
 
 if duplicates_count > 0:
     logger.warning(f"Dataset contains {duplicates_count} duplicate rows. Dropping them.")
